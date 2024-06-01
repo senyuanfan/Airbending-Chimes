@@ -34,8 +34,9 @@ int y;
 int state;
 
 // set the number of steps for each motion
-int num_steps = 300;
-int num_moves = 3;
+int numsteps_base = 200;
+int numsteps;
+int nummoves = 3;
 
 void setup() {
 
@@ -61,7 +62,8 @@ float threshold = 30;
 void loop() {
 
   d1 = measureDistance(trigPin1, echoPin1);
-  d1 = min(d1, 100);
+  d1 = min(d1, 80);
+
   // Serial.println(distance1);
   mvavg = (1 - lambda) * mvavg + lambda * d1;
   gatedavg = min(mvavg, 50);
@@ -133,9 +135,10 @@ void SmallStepMode()
 {
   Serial.println("Stepping at 1/8th microstep mode.");
   digitalWrite(dir, LOW); //Pull direction pin low to move "forward"
-  digitalWrite(MS1, HIGH); //Pull MS1, and MS2 high to set logic to 1/8th microstep resolution
+
+  digitalWrite(MS1, LOW); //Pull MS1, and MS2 high to set logic to 1/8th microstep resolution
   digitalWrite(MS2, HIGH);
-  for(x= 0; x<num_steps; x++)  //Loop the forward stepping enough times for motion to be visible
+  for(x= 0; x<numsteps; x++)  //Loop the forward stepping enough times for motion to be visible
   {
     digitalWrite(stp,HIGH); //Trigger one step forward
     delay(1);
@@ -152,7 +155,7 @@ void ForwardBackwardStep()
   Serial.println("Alternate between stepping forward and reverse.");
   digitalWrite(MS1, LOW); //Pull MS1, and MS2 high to set logic to 1/8th microstep resolution
   digitalWrite(MS2, HIGH);
-  for(x= 1; x<num_moves; x++)  //Loop the forward stepping enough times for motion to be visible
+  for(x= 1; x<nummoves; x++)  //Loop the forward stepping enough times for motion to be visible
   {
     //Read direction pin state and change it
     state=digitalRead(dir);
@@ -164,8 +167,14 @@ void ForwardBackwardStep()
     {
       digitalWrite(dir,HIGH);
     }
-    
-    for(y=0; y<num_steps; y++)
+    if( (x%2) != 0){
+      numsteps = numsteps_base * 2;
+    }
+    else{
+      numsteps = numsteps_base;
+    }
+
+    for(y=0; y<numsteps; y++)
     {
       digitalWrite(stp,HIGH); //Trigger one step
       delay(1);
