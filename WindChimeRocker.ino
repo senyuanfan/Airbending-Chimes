@@ -21,6 +21,8 @@ float lambda = 0.95;
 float mvavg = 0.0;
 float gatedavg = 0.0;
 
+float threshold = 50;
+
 // motor pin and variable setup
 #define stp 13
 #define dir 14
@@ -28,15 +30,17 @@ float gatedavg = 0.0;
 #define MS2 18
 #define EN  19
 
+#define SLP 22
+
 char user_input;
 int x;
 int y;
 int state;
 
 // set the number of steps for each motion
-int numsteps_base = 200;
+int numsteps_base = 150;
 int numsteps;
-int nummoves = 3;
+int num_swings = 3;
 
 void setup() {
 
@@ -53,11 +57,14 @@ void setup() {
   pinMode(MS1, OUTPUT);
   pinMode(MS2, OUTPUT);
   pinMode(EN, OUTPUT);
+
+  pinMode(SLP, OUTPUT);
+
+  digitalWrite(SLP, HIGH);
+
   resetEDPins();
 }
 
-
-float threshold = 30;
 
 void loop() {
 
@@ -155,7 +162,8 @@ void ForwardBackwardStep()
   Serial.println("Alternate between stepping forward and reverse.");
   digitalWrite(MS1, LOW); //Pull MS1, and MS2 high to set logic to 1/8th microstep resolution
   digitalWrite(MS2, HIGH);
-  for(x= 1; x<nummoves; x++)  //Loop the forward stepping enough times for motion to be visible
+
+  for(x= 0; x<num_swings; x++)  //Loop the forward stepping enough times for motion to be visible
   {
     //Read direction pin state and change it
     state=digitalRead(dir);
@@ -167,13 +175,17 @@ void ForwardBackwardStep()
     {
       digitalWrite(dir,HIGH);
     }
-    if( (x%2) != 0){
-      numsteps = numsteps_base * 2;
-    }
-    else{
+    
+    if( x == (num_swings - 1) ){
       numsteps = numsteps_base;
     }
-
+    else if( x == 0 ){
+      numsteps = numsteps_base;
+    }
+    else{
+      numsteps = numsteps_base * 2;
+    }
+    Serial.println(numsteps);
     for(y=0; y<numsteps; y++)
     {
       digitalWrite(stp,HIGH); //Trigger one step
@@ -181,8 +193,7 @@ void ForwardBackwardStep()
       digitalWrite(stp,LOW); //Pull step pin low so it can be triggered again
       delay(1);
     }
-
-    // put a delay before reversing direction to prevent gliding 
-    delay(500);
+    delay(300);
   }
+  
 }
