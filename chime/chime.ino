@@ -12,6 +12,13 @@
 #define MS2 18
 #define EN  19
 
+// Define radius
+const int steps = 75;
+
+// Define min and max speeds
+const int minSpeed = 25;
+const int maxSpeed = 2;
+
 // Define the number of samples for the moving average
 const int numSamples = 2;
 
@@ -51,7 +58,6 @@ void read() {
   while (true) {
     // Read a value from analog pin A0
     float d = measureDistance(trigPin, echoPin);
-    d = min(d, 80);
 
     // Subtract the oldest sample value from the sum
     sum -= samples[ind];
@@ -98,20 +104,28 @@ void setup() {
   }
 
   threads.addThread(read);
+
+  // Set up striker
+  digitalWrite(EN, LOW);
+
+  for (int i = 0; i < round(steps / 2); i++) {
+    digitalWrite(stp, HIGH); // Trigger one step
+    threads.delay(20);
+    digitalWrite(stp, LOW); // Pull step pin low so it can be triggered again
+    threads.delay(20);
+  }
 }
 
 void loop() {
-  digitalWrite(EN, LOW);
+  threads.delay(300);
 
   digitalRead(dir) == HIGH ? digitalWrite(dir, LOW) : digitalWrite(dir, HIGH);
 
-  for (int i = 0; i < 50; i++) {
-    int speed = round(map(movingAverage, 1, 80, 1, 20));
+  for (int i = 0; i < steps; i++) {
+    int speed = max(maxSpeed, min(minSpeed, round(map(movingAverage, 30, 160, maxSpeed, minSpeed))));
     digitalWrite(stp, HIGH); // Trigger one step
     threads.delay(speed);
     digitalWrite(stp, LOW); // Pull step pin low so it can be triggered again
     threads.delay(speed);
   }
-
-  threads.delay(300);
 }
