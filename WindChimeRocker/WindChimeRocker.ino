@@ -1,10 +1,26 @@
 #include <Bounce.h>
 
+// motor pin and variable setup
+#define stp 13
+#define dir 14
+#define MS1 15
+#define MS2 18
+#define EN  19
+
+#define SLP 22
+
 // ultrasonic pin and variable sensor setup
-const int trigPin1 = 3;
-const int echoPin1 = 4;
-const int trigPin2 = 5;
-const int echoPin2 = 6;
+#define trigPin1 3
+#define echoPin1 4
+#define trigPin2 5
+#define echoPin2 6
+
+
+int x;
+int y;
+int state;
+
+
 
 float d1;
 float d2;
@@ -22,30 +38,17 @@ float mvavg = 0.0;
 float gatedavg = 0.0;
 
 float gate = 100;
-float threshold = -35;
-
-// motor pin and variable setup
-#define stp 13
-#define dir 14
-#define MS1 15
-#define MS2 18
-#define EN  19
-
-#define SLP 22
-
-char user_input;
-int x;
-int y;
-int state;
+float threshold = -10;
+int mdelay = 500;
 
 // set the number of steps for each motion
-int numsteps_base = 180;
+int numsteps_base = 150;
 int numsteps;
 int numswings = 3;
 
 int trigger = 0;
 int idle = 0;
-int reset_timer = 50;
+int reset_timer = 30;
 
 void setup() {
 
@@ -79,9 +82,10 @@ void loop() {
   // mvavg = (1 - lambda) * mvavg + lambda * d1;
   // gatedavg = min(mvavg, 50);
 
-  pd1 = d1 - 0.9 * pd1;
-  // Serial.println(pd1);
+  pd1 = d1 - 0.95 * pd1;
+  Serial.println(pd1);
 
+  // if(abs(pd1) > threshold)
   if(pd1 < threshold)
   {
 
@@ -170,9 +174,9 @@ void SmallStepMode()
   for(x= 0; x<numsteps; x++)  //Loop the forward stepping enough times for motion to be visible
   {
     digitalWrite(stp,HIGH); //Trigger one step forward
-    delay(1);
+    delayMicroseconds(mdelay);
     digitalWrite(stp,LOW); //Pull step pin low so it can be triggered again
-    delay(1);
+    delayMicroseconds(mdelay);
   }
   Serial.println("Enter new option");
   Serial.println();
@@ -188,9 +192,9 @@ void ForwardStep(int steps)
   for(x= 0; x<steps; x++)  //Loop the forward stepping enough times for motion to be visible
   {
     digitalWrite(stp,HIGH); //Trigger one step forward
-    delay(1);
+    delayMicroseconds(mdelay);
     digitalWrite(stp,LOW); //Pull step pin low so it can be triggered again
-    delay(1);
+    delayMicroseconds(mdelay);
   }
 }
 
@@ -205,9 +209,9 @@ void ReverseStep(int steps)
   for(x= 0; x<steps; x++)  //Loop the stepping enough times for motion to be visible
   {
     digitalWrite(stp,HIGH); //Trigger one step
-    delay(1);
+    delayMicroseconds(mdelay);
     digitalWrite(stp,LOW); //Pull step pin low so it can be triggered again
-    delay(1);
+    delayMicroseconds(mdelay);
   }
 }
 
@@ -247,7 +251,7 @@ void ForwardBackwardStep()
       digitalWrite(stp,LOW); //Pull step pin low so it can be triggered again
       delay(1);
     }
-    delay(300);
+    delay(200);
   }
   
 }
