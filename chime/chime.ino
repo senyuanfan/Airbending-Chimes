@@ -13,11 +13,11 @@
 #define EN  19
 
 // Define radius
-const int steps = 75;
+const int steps = 300;
 
 // Define min and max speeds
-const int minSpeed = 25;
-const int maxSpeed = 2;
+const int minSpeed = 1875;
+const int maxSpeed = 125;
 
 // Define the number of samples for the moving average
 const int numSamples = 2;
@@ -35,8 +35,8 @@ int count = 0;
 void resetEDPins() {
   digitalWrite(stp, LOW);
   digitalWrite(dir, LOW);
-  digitalWrite(MS1, LOW);
-  digitalWrite(MS2, LOW);
+  digitalWrite(MS1, HIGH);
+  digitalWrite(MS2, HIGH);
   digitalWrite(EN, HIGH);
 }
 
@@ -84,6 +84,10 @@ void read() {
   }
 }
 
+float dtos(float d) {
+  return exp(0.0812636 * d) + 187.934; 
+}
+
 void setup() {
   // Ultrasonic Setup
   Serial.begin(9600);  // Initialize serial communication at 9600 baud
@@ -122,10 +126,10 @@ void loop() {
   digitalRead(dir) == HIGH ? digitalWrite(dir, LOW) : digitalWrite(dir, HIGH);
 
   for (int i = 0; i < steps; i++) {
-    int speed = max(maxSpeed, min(minSpeed, round(map(movingAverage, 30, 160, maxSpeed, minSpeed))));
+    int speed = max(maxSpeed, min(minSpeed, round(dtos(movingAverage))));
     digitalWrite(stp, HIGH); // Trigger one step
-    threads.delay(speed);
+    threads.delay_us(speed);
     digitalWrite(stp, LOW); // Pull step pin low so it can be triggered again
-    threads.delay(speed);
+    threads.delay_us(speed);
   }
 }
