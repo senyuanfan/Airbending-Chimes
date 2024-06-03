@@ -21,7 +21,8 @@ float lambda = 0.95;
 float mvavg = 0.0;
 float gatedavg = 0.0;
 
-float threshold = 50;
+float gate = 100;
+float threshold = -35;
 
 // motor pin and variable setup
 #define stp 13
@@ -38,9 +39,13 @@ int y;
 int state;
 
 // set the number of steps for each motion
-int numsteps_base = 150;
+int numsteps_base = 180;
 int numsteps;
 int numswings = 3;
+
+int trigger = 0;
+int idle = 0;
+int reset_timer = 50;
 
 void setup() {
 
@@ -58,10 +63,8 @@ void setup() {
   pinMode(MS2, OUTPUT);
   pinMode(EN, OUTPUT);
 
-  pinMode(SLP, OUTPUT);
-
-  digitalWrite(SLP, HIGH);
-  digitalWrite(EN, LOW);
+  // pinMode(SLP, OUTPUT);
+  // digitalWrite(SLP, HIGH);
 
   resetEDPins();
 }
@@ -70,26 +73,64 @@ void setup() {
 void loop() {
 
   d1 = measureDistance(trigPin1, echoPin1);
-  d1 = min(d1, 80);
+  d1 = min(d1, gate);
 
   // Serial.println(distance1);
-  mvavg = (1 - lambda) * mvavg + lambda * d1;
-  gatedavg = min(mvavg, 50);
+  // mvavg = (1 - lambda) * mvavg + lambda * d1;
+  // gatedavg = min(mvavg, 50);
 
   pd1 = d1 - 0.9 * pd1;
-  Serial.println(pd1);
+  // Serial.println(pd1);
 
-  if(pd1 > threshold)
+  if(pd1 < threshold)
   {
-    Serial.println("Motion Detected");
-    digitalWrite(EN, LOW); //Pull enable pin low to allow motor control
-    ForwardBackwardStep();
+
+    Serial.print("Motion Detected, Value: ");
+    Serial.println(pd1);
+    
+    if( trigger == 0 ){
+      ForwardStep(numsteps_base);
+    }
+    else if( (trigger % 2) == 0 ){
+      ForwardStep(numsteps_base * 2);
+    }
+    else{
+      ReverseStep(numsteps_base * 2);
+    }
+    
+    // ForwardBackwardStep();
+    trigger += 1;
+    idle = 0;
+
     resetEDPins();
-    delay(2000);
+    // delay(100);
   }
+  else{
+    idle += 1;
+  }
+
+  if( (idle > reset_timer) && (trigger != 0) ){
+    Serial.println("Reset");
+    // reset striker location
+    if( (trigger % 2) == 0 ){
+      ForwardStep(numsteps_base);
+    }
+    else{
+      ReverseStep(numsteps_base);
+    }
+    trigger = 0;
+    idle = 0;
+  }
+
+  // Serial.print("Trigger: ");
+  // Serial.println(trigger);
+
+  // Serial.print("Idle: ");
+  // Serial.println(idle);
+
   pd1 = d1;
 
-  delay(200);
+  delay(100);
 
 }
 
@@ -109,8 +150,11 @@ void resetEDPins()
 {
   digitalWrite(stp, LOW);
   digitalWrite(dir, LOW);
+
+  // set MS pings to HIGH-HIGH for 1/8 step mode
   digitalWrite(MS1, HIGH);
   digitalWrite(MS2, HIGH);
+
   digitalWrite(EN, HIGH);
 }
 
@@ -119,6 +163,8 @@ void SmallStepMode()
 {
   Serial.println("Stepping at 1/8th microstep mode.");
   digitalWrite(dir, LOW); //Pull direction pin low to move "forward"
+  digitalWrite(EN, LOW); //Pull enable pin low to allow motor control
+
   digitalWrite(MS1, HIGH); //Pull MS1, and MS2 high to set logic to 1/8th microstep resolution
   digitalWrite(MS2, HIGH);
   for(x= 0; x<numsteps; x++)  //Loop the forward stepping enough times for motion to be visible
@@ -132,12 +178,44 @@ void SmallStepMode()
   Serial.println();
 }
 
+void ForwardStep(int steps)
+{
+  Serial.print("Moving forward at default steps:");
+  Serial.println(steps);
+
+  digitalWrite(EN, LOW); //Pull enable pin low to allow motor control
+  digitalWrite(dir, LOW); //Pull direction pin low to move "forward"
+  for(x= 0; x<steps; x++)  //Loop the forward stepping enough times for motion to be visible
+  {
+    digitalWrite(stp,HIGH); //Trigger one step forward
+    delay(1);
+    digitalWrite(stp,LOW); //Pull step pin low so it can be triggered again
+    delay(1);
+  }
+}
+
+//Reverse default microstep mode function
+void ReverseStep(int steps)
+{
+  Serial.print("Moving in reverse at steps:");
+  Serial.println(steps);
+
+  digitalWrite(EN, LOW); //Pull enable pin low to allow motor control
+  digitalWrite(dir, HIGH); //Pull direction pin high to move in "reverse"
+  for(x= 0; x<steps; x++)  //Loop the stepping enough times for motion to be visible
+  {
+    digitalWrite(stp,HIGH); //Trigger one step
+    delay(1);
+    digitalWrite(stp,LOW); //Pull step pin low so it can be triggered again
+    delay(1);
+  }
+}
+
 //Forward/reverse stepping function
 void ForwardBackwardStep()
 {
   Serial.println("Alternate between stepping forward and reverse.");
-  digitalWrite(MS1, LOW); //Pull MS1, and MS2 high to set logic to 1/8th microstep resolution
-  digitalWrite(MS2, HIGH);
+  digitalWrite(EN, LOW); //Pull enable pin low to allow motor control
 
   for(x= 0; x<numswings; x++)  //Loop the forward stepping enough times for motion to be visible
   {
