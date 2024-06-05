@@ -16,8 +16,8 @@
 const int steps = 300;
 
 // Define min and max speeds
-const int minSpeed = 1875;
-const int maxSpeed = 125;
+const int minSpeed = 6000;
+const int maxSpeed = 200;
 
 // Define the number of samples for the moving average
 const int numSamples = 2;
@@ -85,7 +85,7 @@ void read() {
 }
 
 float dtos(float d) {
-  return minSpeed - exp(0.0812636 * d) + 187.934; 
+  return 1875 + 187.934 - exp(0.0812636 * d) + 187.934; 
 }
 
 void setup() {

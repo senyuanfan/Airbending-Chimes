@@ -16,7 +16,7 @@
 const int steps = 300;
 
 // Define min and max speeds
-const int minSpeed = 1875;
+const int minSpeed = 6000;
 const int maxSpeed = 125;
 
 // Define the number of samples for the moving average
@@ -114,9 +114,9 @@ void setup() {
 
   for (int i = 0; i < round(steps / 2); i++) {
     digitalWrite(stp, HIGH); // Trigger one step
-    threads.delay(20);
+    threads.delay(10);
     digitalWrite(stp, LOW); // Pull step pin low so it can be triggered again
-    threads.delay(20);
+    threads.delay(10);
   }
 }
 
@@ -127,6 +127,7 @@ void loop() {
 
   for (int i = 0; i < steps; i++) {
     int speed = max(maxSpeed, min(minSpeed, round(dtos(movingAverage))));
+    Serial.println(speed);
     digitalWrite(stp, HIGH); // Trigger one step
     threads.delay_us(speed);
     digitalWrite(stp, LOW); // Pull step pin low so it can be triggered again
