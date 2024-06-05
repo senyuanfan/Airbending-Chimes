@@ -17,17 +17,19 @@
 #define trigPin2 5
 #define echoPin2 6
 
+#define TOTAL_STEPS 100
+
 // set the number of steps for each motion
 int numsteps_base = 30;
 int numsteps;
 int numswings = 3;
 
-int stepperSpeed = 40;// stepper motor speed in rpm
+int stepperSpeed = 60;// stepper motor speed in rpm
 
 // create an instance of the stepper class, specifying
 // the number of steps of the motor and the pins it's
 // attached to
-Stepper stepper(numsteps_base*2, S1, S2, S3, S4);
+Stepper stepper(TOTAL_STEPS, S1, S2, S3, S4);
 
 // motion sensing code
 int x;
@@ -74,7 +76,7 @@ void setup()
 
   digitalWrite(PWMA, HIGH); //Pull enable pin low to allow motor control
   digitalWrite(PWMB, HIGH); //Pull enable pin low to allow motor control
-  digitalWrite(EN, HIGH); //Pull enable pin low to allow motor control
+  // digitalWrite(EN, HIGH); //Pull enable pin low to allow motor control
 
   // set the speed of the motor to 30 RPMs
   stepper.setSpeed(stepperSpeed);
@@ -149,25 +151,29 @@ void loop(){
   // Serial.print("Trigger: ");
   // Serial.println(trigger);
 
-  // Serial.print("Idle: ");
+  // Serial.print("Idle:);
   // Serial.println(idle);
 
   pd1 = d1;
 
-  delay(100);
+  delay(50);
 
 }
 
 void ForwardStep(int stp){
+  digitalWrite(EN, HIGH); //Pull enable pin low to allow motor control
   Serial.print("Moving forward at steps:");
   Serial.println(stp);
   stepper.step(stp);
+  digitalWrite(EN, LOW);
 }
 
 void ReverseStep(int stp){
+  digitalWrite(EN, HIGH);
   Serial.print("Moving reverse at steps:");
   Serial.println(stp);
   stepper.step(-stp);
+  digitalWrite(EN, LOW);
 }
 
 float measureDistance(int trigPin, int echoPin) {
